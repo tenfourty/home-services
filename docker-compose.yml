@@ -302,7 +302,7 @@ services:
 
   organizr:
     container_name: organizr
-    image: organizrtools/organizr-v2:php-fpm
+    image: docker.io/organizrtools/organizr-v2:php-fpm
     restart: always
     healthcheck:
       interval: 1m30s
