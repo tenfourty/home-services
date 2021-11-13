@@ -1,0 +1,329 @@
+version: '3.5'
+services:
+
+  # endlessh:
+  #   image: ghcr.io/linuxserver/endlessh
+  #   container_name: endlessh
+  #   environment:
+  #     - PUID=1001
+  #     - PGID=1001
+  #     - TZ=${TZ}
+  #     - MSDELAY=10000 #optional
+  #     - MAXLINES=32 #optional
+  #     - MAXCLIENTS=4096 #optional
+  #     - LOGFILE=false #optional
+  #     - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
+  #   ports:
+  #     - 22:2222
+  #   restart: always
+
+  ldap-auth:
+    image: ghcr.io/linuxserver/ldap-auth
+    container_name: ldap-auth
+    environment:
+      - TZ=${TZ}
+    restart: always
+    networks:
+      - proxy
+
+  swag:
+    image: ghcr.io/linuxserver/swag
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./secrets/swag.env
+    environment:
+      PUID: 1001
+      PGID: 1001
+      TZ: ${TZ}
+      URL: ${DOMAINNAME}
+      SUBDOMAINS: wildcard
+      VALIDATION: dns
+      DNSPLUGIN: cloudflare
+      EMAIL: webmaster@${DOMAINNAME}
+      MAXMINDDB_LICENSE_KEY: ${MY_MAXMINDDB_LICENSE_KEY}
+      DOCKER_MODS: linuxserver/mods:universal-wait-for-internet|linuxserver/mods:swag-cloudflare-real-ip|linuxserver/mods:swag-auto-reload|linuxserver/mods:universal-cloudflared
+      CF_ZONE_ID: ${MY_CF_ZONE_ID}
+      CF_ACCOUNT_ID: ${MY_CF_ACCOUNT_ID}
+      CF_API_TOKEN: ${MY_CF_API_TOKEN}
+      CF_TUNNEL_NAME: ${MY_CF_TUNNEL_NAME}
+      CF_TUNNEL_PASSWORD: ${MY_CF_TUNNEL_PASSWORD}
+      CF_TUNNEL_CONFIG: |
+        ingress:
+          - hostname: ${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "www.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: www.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "www.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}" 
+          - hostname: lidarr.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "lidarr.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: radarr.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "radarr${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: sonarr.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "sonarr.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: bazarr.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "bazarr.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: nextcloud.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "nextcloud.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: plex.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "plex.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - hostname: oga2.${DOMAINNAME}
+            service: https://swag
+            originRequest:
+              httpHostHeader: "oga2.${DOMAINNAME}"
+              originServerName: "*.${DOMAINNAME}"
+          - service: http_status:404
+    volumes:
+      - ${DATADIR}/swag:/config
+    ports:
+      - 443:443
+      - 80:80
+    networks:
+      - proxy
+    restart: always
+    depends_on:
+      - ldap-auth
+
+  sabnzbd:
+    container_name: sabnzbd
+    image: ghcr.io/linuxserver/sabnzbd:latest
+    restart: always
+    depends_on:
+      - swag
+    environment:
+      - TZ=${TZ}
+      - PUID=0 
+      - PGID=0
+      - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
+    volumes:
+      - ${DATADIR}/sabnzbd:/config:rw
+      - ${INCOMPLETE_DOWNLOADS}:/incomplete-downloads:rw
+      - ${COMPLETE_DOWNLOADS}:/downloads:rw
+    networks:
+      - proxy
+
+  radarr:
+    image: ghcr.io/linuxserver/radarr
+    container_name: radarr
+    restart: always
+    depends_on:
+      - swag
+      - sabnzbd
+    environment:
+      PUID: 0
+      PGID: 0
+      TZ: ${TZ}
+      DOCKER_MODS: linuxserver/mods:universal-wait-for-internet
+    volumes:
+      - ${DATADIR}/radarr/:/config:rw
+      - ${MOVIES}:/movies:rw
+      - ${COMPLETE_DOWNLOADS}:/downloads:rw
+    networks:
+      - proxy
+
+  sonarr:
+    image: ghcr.io/linuxserver/sonarr
+    container_name: sonarr
+    restart: always
+    depends_on:
+      - swag
+      - sabnzbd
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
+    volumes:
+      - ${DATADIR}/sonarr/:/config:rw
+      - ${TV}:/tv:rw
+      - ${COMPLETE_DOWNLOADS}:/downloads:rw
+    networks:
+      - proxy
+
+  bazarr:
+    image: ghcr.io/linuxserver/bazarr
+    container_name: bazarr
+    depends_on:
+      - swag
+      - sonarr
+      - radarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
+    volumes:
+      - ${DATADIR}/bazarr/:/config
+      - ${MOVIES}:/movies
+      - ${TV}:/tv
+    networks:
+      - proxy
+    restart: always
+
+  lidarr:
+    image: ghcr.io/linuxserver/lidarr
+    container_name: lidarr
+    depends_on:
+      - swag
+      - sabnzbd
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
+    volumes:
+      - ${DATADIR}/lidarr:/config
+      - ${MUSIC}:/music
+      - ${COMPLETE_DOWNLOADS}:/downloads
+    networks:
+      - proxy
+    restart: always
+
+# using native QNAP app for plex so I can take advantage of transcoding but leaving this in here in
+# case I want to run this as a container (how I ran Plex before I moved everything else into a VM because Plex broke Docker)
+#  plex:
+#    container_name: plex
+#    image: ghcr.io/linuxserver/plex 
+#    restart: always
+#    depends_on:
+#      - swag
+#    network_mode: host
+#    environment:
+#      - TZ=${TZ}
+#      - PUID=0
+#      - PGID=0
+#      - VERSION=docker
+#    devices:
+#      - /dev/dri:/dev/dri
+#    volumes:
+#      - ${DATADIR}/plex-linuxserver/:/config:rw
+#      - ${TV}:/tv
+#      - ${MOVIES}:/movies
+#      - ${MUSIC}:/music
+#      - ${AUDIOBOOKS}:/audiobooks
+#      - ${TRANSCODE}:/transcode:rw
+
+  tautulli:
+    container_name: tautulli
+    hostname: tautulli
+    image: ghcr.io/linuxserver/tautulli
+    restart: always
+    depends_on:
+      - swag
+      - plex
+    volumes:
+      - ${DATADIR}/tautulli/config:/config
+      - ${DATADIR}/tautulli/logs:/logs:ro
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    networks:
+      - proxy
+
+  ombi:
+    container_name: ombi
+    hostname: ombi
+    image: ghcr.io/linuxserver/ombi
+    restart: always
+    depends_on:
+      - swag
+      - sonarr
+      - radarr
+      - lidarr 
+    volumes:
+      - ${DATADIR}/ombi:/config
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TZ}
+    networks:
+      - proxy
+
+  mariadb-nextcloud:
+    image: ghcr.io/linuxserver/mariadb:alpine
+    container_name: mariadb-nextcloud
+    env_file:
+      - ./secrets/mariadb-nextcloud.env
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - MYSQL_ROOT_PASSWORD=${MY_MYSQL_ROOT_PASSWORD}
+      - TZ=${TZ}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${MY_MYSQL_PASSWORD}
+    volumes:
+      - ${DATADIR}/mariadb-nextcloud/config:/config
+    restart: always
+    networks:
+      - proxy
+
+  nextcloud:
+    image: ghcr.io/linuxserver/nextcloud
+    container_name: nextcloud
+    depends_on:
+      - swag
+      - mariadb-nextcloud
+    environment:
+      - PUID=1004
+      - PGID=100
+      - TZ=${TZ}
+    volumes:
+      - ${DATADIR}/nextcloud:/config
+      - ${NEXTCLOUD}:/data
+    restart: always
+    networks:
+      - proxy
+
+  organizr:
+    container_name: organizr
+    image: organizrtools/organizr-v2:php-fpm
+    restart: always
+    healthcheck:
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    depends_on:
+      - swag
+    volumes:
+      - ${DATADIR}/organizr:/config
+    environment:
+      - PUID=1001
+      - PGID=100
+      - TZ=${TZ}
+    networks:
+      - proxy
+
+networks:
+
+# docker network create proxy
+  proxy:
+    external: true
+    name: proxy
+
