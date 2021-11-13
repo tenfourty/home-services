@@ -47,7 +47,10 @@ git-crypt unlock
 
 I'm currently using docker-compose
 
->docker-compose up -d
+```
+sudo docker network create proxy
+sudo /usr/local/bin/docker-compose up -d
+```
 
 And I have the following helper scripts:
 
@@ -56,6 +59,3 @@ And I have the following helper scripts:
 `restart-all-containers.sh` - restart everything
 
 `plex-restart.sh` - restart plex
-
-
-
