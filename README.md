@@ -14,7 +14,26 @@ sudo dnf install arm-image-installer
 sudo arm-image-installer --image=Fedora-IoT-[version].raw.xz --target=rpi3 --media=/dev/XXX --addkey --norootpass --relabel --resizefs
 ```
 
+## QNAP
 
+My NAS. QNAP constantly screw around with their users so I've moved my containers into a VM running on my NAS. Only Plex runs natively using the app downlaed from Plex themselves.
+
+[How to update Plex on the command line using ssh](https://forums.plex.tv/t/howto-update-pms-on-qnap-using-ssh/485831):
+
+Browse to https://www.plex.tv/media-server-downloads/
+    Select the relevant QPKG
+    Right-Click on the download link, and copy to your clipboard
+
+Open an SSH connection to your QNAP and in the console, type:
+
+```
+cd /share/Public
+curl <DOWNLOADLINK> --output pms.qpkg
+chmod +x pms.qpkg
+./pms.qpkg
+```
+
+## Container host
 
 I'm using a Rocky Linux 8 VM running on my QNAP.
 
@@ -42,6 +61,7 @@ I have the following nfs mounts from my NAS:
 I handle secrets via plaintext files in secrets/ subdirectory (e.g. secrets/myservice.txt) and use [git-crypt](https://github.com/AGWA/git-crypt) to encrypt them. That way, it's easy to add more secrets to the repository, but also only authorized people and the deployment server has access to the files.
 
 ```
+sudo dnf install git-crypt
 git-crypt unlock
 ```
 
