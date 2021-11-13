@@ -234,7 +234,7 @@ services:
     restart: always
     depends_on:
       - swag
-      - plex
+ #     - plex
     volumes:
       - ${DATADIR}/tautulli/config:/config
       - ${DATADIR}/tautulli/logs:/logs:ro
