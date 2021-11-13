@@ -1,4 +1,4 @@
-version: '3.5'
+version: '3.9'
 services:
 
   # endlessh:
@@ -42,13 +42,7 @@ services:
       VALIDATION: dns
       DNSPLUGIN: cloudflare
       EMAIL: webmaster@${DOMAINNAME}
-      MAXMINDDB_LICENSE_KEY: ${MY_MAXMINDDB_LICENSE_KEY}
       DOCKER_MODS: linuxserver/mods:universal-wait-for-internet|linuxserver/mods:swag-cloudflare-real-ip|linuxserver/mods:swag-auto-reload|linuxserver/mods:universal-cloudflared
-      CF_ZONE_ID: ${MY_CF_ZONE_ID}
-      CF_ACCOUNT_ID: ${MY_CF_ACCOUNT_ID}
-      CF_API_TOKEN: ${MY_CF_API_TOKEN}
-      CF_TUNNEL_NAME: ${MY_CF_TUNNEL_NAME}
-      CF_TUNNEL_PASSWORD: ${MY_CF_TUNNEL_PASSWORD}
       CF_TUNNEL_CONFIG: |
         ingress:
           - hostname: ${DOMAINNAME}
@@ -98,7 +92,7 @@ services:
               originServerName: "*.${DOMAINNAME}"
           - service: http_status:404
     volumes:
-      - ${DATADIR}/swag:/config
+      - $DATADIR/swag:/config
     ports:
       - 443:443
       - 80:80
@@ -120,9 +114,9 @@ services:
       - PGID=0
       - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
     volumes:
-      - ${DATADIR}/sabnzbd:/config:rw
-      - ${INCOMPLETE_DOWNLOADS}:/incomplete-downloads:rw
-      - ${COMPLETE_DOWNLOADS}:/downloads:rw
+      - $DATADIR/sabnzbd:/config:rw
+      - $INCOMPLETE_DOWNLOADS:/incomplete-downloads:rw
+      - $COMPLETE_DOWNLOADS:/downloads:rw
     networks:
       - proxy
 
@@ -139,9 +133,9 @@ services:
       TZ: ${TZ}
       DOCKER_MODS: linuxserver/mods:universal-wait-for-internet
     volumes:
-      - ${DATADIR}/radarr/:/config:rw
-      - ${MOVIES}:/movies:rw
-      - ${COMPLETE_DOWNLOADS}:/downloads:rw
+      - $DATADIR/radarr/:/config:rw
+      - /$MOVIES/:/movies:rw
+      - $COMPLETE_DOWNLOADS:/downloads:rw
     networks:
       - proxy
 
@@ -158,9 +152,9 @@ services:
       - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
     volumes:
-      - ${DATADIR}/sonarr/:/config:rw
-      - ${TV}:/tv:rw
-      - ${COMPLETE_DOWNLOADS}:/downloads:rw
+      - $DATADIR/sonarr/:/config:rw
+      - $TV:/tv:rw
+      - $COMPLETE_DOWNLOADS:/downloads:rw
     networks:
       - proxy
 
@@ -177,9 +171,10 @@ services:
       - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
     volumes:
-      - ${DATADIR}/bazarr/:/config
-      - ${MOVIES}:/movies
-      - ${TV}:/tv
+      - $DATADIR/bazarr/:/config
+      - /
+      $MOVIES/:/movies
+      - $TV:/tv
     networks:
       - proxy
     restart: always
@@ -196,9 +191,9 @@ services:
       - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
     volumes:
-      - ${DATADIR}/lidarr:/config
-      - ${MUSIC}:/music
-      - ${COMPLETE_DOWNLOADS}:/downloads
+      - $DATADIR/lidarr:/config
+      - $MUSIC:/music
+      - $COMPLETE_DOWNLOADS:/downloads
     networks:
       - proxy
     restart: always
@@ -220,12 +215,12 @@ services:
 #    devices:
 #      - /dev/dri:/dev/dri
 #    volumes:
-#      - ${DATADIR}/plex-linuxserver/:/config:rw
-#      - ${TV}:/tv
-#      - ${MOVIES}:/movies
-#      - ${MUSIC}:/music
-#      - ${AUDIOBOOKS}:/audiobooks
-#      - ${TRANSCODE}:/transcode:rw
+#      - $DATADIR/plex-linuxserver/:/config:rw
+#      - $TV:/tv
+#      - $MOVIES:/movies
+#      - $MUSIC:/music
+#      - $AUDIOBOOKS:/audiobooks
+#      - $TRANSCODE:/transcode:rw
 
   tautulli:
     container_name: tautulli
@@ -236,8 +231,8 @@ services:
       - swag
  #     - plex
     volumes:
-      - ${DATADIR}/tautulli/config:/config
-      - ${DATADIR}/tautulli/logs:/logs:ro
+      - $DATADIR/tautulli/config:/config
+      - $DATADIR/tautulli/logs:/logs:ro
     environment:
       - PUID=0
       - PGID=0
@@ -256,7 +251,7 @@ services:
       - radarr
       - lidarr 
     volumes:
-      - ${DATADIR}/ombi:/config
+      - $DATADIR/ombi:/config
     environment:
       - PUID=0
       - PGID=0
@@ -272,13 +267,11 @@ services:
     environment:
       - PUID=1001
       - PGID=1001
-      - MYSQL_ROOT_PASSWORD=${MY_MYSQL_ROOT_PASSWORD}
       - TZ=${TZ}
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_PASSWORD=${MY_MYSQL_PASSWORD}
     volumes:
-      - ${DATADIR}/mariadb-nextcloud/config:/config
+      - $DATADIR/mariadb-nextcloud/config:/config
     restart: always
     networks:
       - proxy
@@ -294,8 +287,8 @@ services:
       - PGID=100
       - TZ=${TZ}
     volumes:
-      - ${DATADIR}/nextcloud:/config
-      - ${NEXTCLOUD}:/data
+      - $DATADIR/nextcloud:/config
+      - $NEXTCLOUD:/data
     restart: always
     networks:
       - proxy
@@ -312,7 +305,7 @@ services:
     depends_on:
       - swag
     volumes:
-      - ${DATADIR}/organizr:/config
+      - $DATADIR/organizr:/config
     environment:
       - PUID=1001
       - PGID=100
