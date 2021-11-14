@@ -172,8 +172,7 @@ services:
       - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
     volumes:
       - $DATADIR/bazarr/:/config
-      - /
-      $MOVIES/:/movies
+      - /$MOVIES/:/movies
       - $TV:/tv
     networks:
       - proxy
