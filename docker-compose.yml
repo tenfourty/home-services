@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3'
 services:
 
   # endlessh:
@@ -42,55 +42,57 @@ services:
       VALIDATION: dns
       DNSPLUGIN: cloudflare
       EMAIL: webmaster@${DOMAINNAME}
-      DOCKER_MODS: linuxserver/mods:universal-wait-for-internet|linuxserver/mods:swag-cloudflare-real-ip|linuxserver/mods:swag-auto-reload|linuxserver/mods:universal-cloudflared
-      CF_TUNNEL_CONFIG: |
-        ingress:
-          - hostname: ${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "www.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: www.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "www.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}" 
-          - hostname: lidarr.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "lidarr.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: radarr.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "radarr${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: sonarr.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "sonarr.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: bazarr.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "bazarr.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: nextcloud.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "nextcloud.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: plex.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "plex.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - hostname: oga2.${DOMAINNAME}
-            service: https://swag
-            originRequest:
-              httpHostHeader: "oga2.${DOMAINNAME}"
-              originServerName: "*.${DOMAINNAME}"
-          - service: http_status:404
+      DOCKER_MODS: linuxserver/mods:universal-wait-for-internet|linuxserver/mods:swag-cloudflare-real-ip|linuxserver/mods:swag-auto-reload
+#      DOCKER_MODS: linuxserver/mods:universal-wait-for-internet|linuxserver/mods:swag-cloudflare-real-ip|linuxserver/mods:swag-auto-reload|linuxserver/mods:universal-cloudflared
+#      CF_TUNNEL_NAME: sylvester
+      # CF_TUNNEL_CONFIG: |
+      #   ingress:
+      #     - hostname: ${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "www.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: www.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "www.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}" 
+      #     - hostname: lidarr.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "lidarr.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: radarr.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "radarr.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: sonarr.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "sonarr.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: bazarr.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "bazarr.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: nextcloud.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "nextcloud.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: plex.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "plex.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - hostname: oga2.${DOMAINNAME}
+      #       service: https://swag
+      #       originRequest:
+      #         httpHostHeader: "oga2.${DOMAINNAME}"
+      #         originServerName: "*.${DOMAINNAME}"
+      #     - service: http_status:404
     volumes:
       - $DATADIR/swag:/config
     ports:
@@ -178,24 +180,24 @@ services:
       - proxy
     restart: always
 
-  lidarr:
-    image: ghcr.io/linuxserver/lidarr
-    container_name: lidarr
-    depends_on:
-      - swag
-      - sabnzbd
-    environment:
-      - PUID=1001
-      - PGID=1001
-      - TZ=${TZ}
-      - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
-    volumes:
-      - $DATADIR/lidarr:/config
-      - $MUSIC:/music
-      - $COMPLETE_DOWNLOADS:/downloads
-    networks:
-      - proxy
-    restart: always
+  # lidarr:
+  #   image: ghcr.io/linuxserver/lidarr
+  #   container_name: lidarr
+  #   depends_on:
+  #     - swag
+  #     - sabnzbd
+  #   environment:
+  #     - PUID=1001
+  #     - PGID=1001
+  #     - TZ=${TZ}
+  #     - DOCKER_MODS=linuxserver/mods:universal-wait-for-internet
+  #   volumes:
+  #     - $DATADIR/lidarr:/config
+  #     - $MUSIC:/music
+  #     - $COMPLETE_DOWNLOADS:/downloads
+  #   networks:
+  #     - proxy
+  #   restart: always
 
 # using native QNAP app for plex so I can take advantage of transcoding but leaving this in here in
 # case I want to run this as a container (how I ran Plex before I moved everything else into a VM because Plex broke Docker)
@@ -248,7 +250,7 @@ services:
       - swag
       - sonarr
       - radarr
-      - lidarr 
+        #      - lidarr 
     volumes:
       - $DATADIR/ombi:/config
     environment:
@@ -258,8 +260,32 @@ services:
     networks:
       - proxy
 
+  clamav:
+    image: mkodockx/docker-clamav:latest
+    container_name: "clamav"
+    #    volumes:
+    #      - /share/Container/container-data/clamav:/var/lib/clamav
+    restart: always
+    healthcheck:
+      test: ["CMD", "./check.sh"]
+      interval: 60s
+      retries: 3
+      start_period: 120s
+    networks:
+      - proxy
+
+  redis:
+    image: redis
+    container_name: redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+    networks:
+      - proxy
+
+
   mariadb-nextcloud:
-    image: ghcr.io/linuxserver/mariadb:alpine
+    image: ghcr.io/linuxserver/mariadb
     container_name: mariadb-nextcloud
     env_file:
       - ./secrets/mariadb-nextcloud.env
@@ -276,11 +302,13 @@ services:
       - proxy
 
   nextcloud:
-    image: ghcr.io/linuxserver/nextcloud
+    image: ghcr.io/linuxserver/nextcloud:php8
     container_name: nextcloud
     depends_on:
       - swag
       - mariadb-nextcloud
+      - redis
+      - clamav
     environment:
       - PUID=1001
       - PGID=1001
@@ -288,6 +316,7 @@ services:
     volumes:
       - $DATADIR/nextcloud:/config
       - $NEXTCLOUD:/data
+      - ./nextcloud_custom_php.ini:/etc/php8/conf.d/nextcloud_custom_php.ini
     restart: always
     networks:
       - proxy
@@ -300,7 +329,7 @@ services:
       interval: 1m30s
       timeout: 10s
       retries: 3
-      start_period: 2m
+#      start_period: 2m
     depends_on:
       - swag
     volumes:
@@ -316,6 +345,6 @@ networks:
 
 # docker network create proxy
   proxy:
-    external: true
-    name: proxy
+     external: true
+#    name: proxy
 
